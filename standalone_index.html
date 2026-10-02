@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laboratorium Virtual Sel Volta SMA - Netlify Ready</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <header class="border-b border-slate-800 bg-slate-900/90 px-4 py-3 sticky top-0 z-30 backdrop-blur">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 font-bold">⚡</div>
+        <div>
+          <h1 class="text-sm md:text-base font-bold text-white">Laboratorium Virtual Sel Volta SMA</h1>
+          <p class="text-[11px] text-slate-400">Simulasi Elektrokimia Mandiri (Siap Deploy Langsung ke Netlify)</p>
+        </div>
+      </div>
+      <div class="text-xs text-slate-400 font-mono bg-slate-800/80 px-2.5 py-1 rounded border border-slate-700">
+        Standar Kurikulum SMA
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Sidebar Controls -->
+    <div class="lg:col-span-4 space-y-4">
+      <!-- Presets -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Pilihan Pasangan Sel Volta</h3>
+        <select id="presetSelect" class="w-full bg-slate-950 border border-slate-700 text-xs text-slate-100 rounded-lg p-2.5 mb-3 focus:outline-none focus:border-cyan-500">
+          <option value="pair-1">Pasangan 1: Zn / ZnSO₄ & Cu / CuSO₄ (Sel Daniell)</option>
+          <option value="pair-2">Pasangan 2: Mg / MgSO₄ & Cu / CuSO₄</option>
+          <option value="pair-3">Pasangan 3: Fe / FeSO₄ & Cu / CuSO₄</option>
+          <option value="pair-4">Pasangan 4: Zn / ZnSO₄ & Ag / AgNO₃</option>
+        </select>
+        <p id="presetDesc" class="text-[11px] text-cyan-300 bg-cyan-950/40 p-2.5 rounded border border-cyan-900/50">
+          Sistem klasik John Frederic Daniell (1836). Nilai E° standar = +1,10 V.
+        </p>
+      </div>
+
+      <!-- Sliders -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow space-y-4">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Pengaturan Konsentrasi Larutan</h3>
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="text-sky-400 font-semibold" id="anodeLabel">Larutan Anoda</span>
+            <span class="font-mono text-cyan-300 font-bold" id="anodeConcVal">1.00 M</span>
+          </div>
+          <input type="range" id="anodeSlider" min="0.1" max="2.0" step="0.1" value="1.0" class="w-full accent-sky-500 cursor-pointer" />
+        </div>
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="text-rose-400 font-semibold" id="cathodeLabel">Larutan Katoda</span>
+            <span class="font-mono text-cyan-300 font-bold" id="cathodeConcVal">1.00 M</span>
+          </div>
+          <input type="range" id="cathodeSlider" min="0.1" max="2.0" step="0.1" value="1.0" class="w-full accent-rose-500 cursor-pointer" />
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-2 gap-2">
+        <button id="switchBtn" class="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow transition-all">
+          SAKELAR [ON]
+        </button>
+        <button id="resetBtn" class="py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold border border-slate-700 transition-all">
+          Reset Simulasi
+        </button>
+      </div>
+
+      <!-- Live Digital Meter -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
+        <div class="text-[11px] font-bold text-slate-400 mb-1">VOLTMETER DIGITAL (E_sel NERNST)</div>
+        <div id="meterDisplay" class="font-mono text-3xl font-extrabold text-cyan-400 py-1 tracking-wider">+1.100 V</div>
+        <div id="spontaneousBadge" class="text-[11px] text-emerald-400 font-semibold mt-1">Reaksi Spontan (E_sel &gt; 0)</div>
+      </div>
+    </div>
+
+    <!-- Main Visualizer & Reactions -->
+    <div class="lg:col-span-8 space-y-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow">
+        <div class="p-2.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-xs">
+          <span class="font-bold text-slate-300 uppercase tracking-wider">Simulasi Sel Volta Makroskopik</span>
+          <span class="text-slate-400">Klik sakelar untuk memutus/menyambung arus</span>
+        </div>
+        <canvas id="voltaCanvas" width="860" height="460" class="w-full bg-slate-950 cursor-pointer"></canvas>
+      </div>
+
+      <!-- Microscopic view toggle -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Zoom Mikroskopik Antarmuka</h3>
+          <div class="flex gap-1 text-xs">
+            <button id="tabAnode" class="px-2.5 py-1 bg-sky-600 text-white rounded font-medium">Mikro Anoda</button>
+            <button id="tabCathode" class="px-2.5 py-1 bg-slate-800 text-slate-300 rounded font-medium">Mikro Katoda</button>
+            <button id="tabBridge" class="px-2.5 py-1 bg-slate-800 text-slate-300 rounded font-medium">Jembatan Garam</button>
+          </div>
+        </div>
+        <canvas id="microCanvas" width="600" height="240" class="w-full bg-slate-950 rounded-lg border border-slate-800"></canvas>
+        <div id="microDesc" class="text-xs text-slate-300 bg-slate-950 p-2.5 rounded border border-slate-800">
+          Atom logam teroksidasi melepaskan elektron ke kawat luar, ion larut ke air sehingga batang anoda mengikis.
+        </div>
+      </div>
+
+      <!-- Reactions & Nernst Equation -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Data Reaksi & Notasi Sel</h3>
+        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono text-center text-sm font-bold text-slate-200" id="cellNotationBox">
+          Zn(s) | Zn²⁺(aq, 1.00 M) || Cu²⁺(aq, 1.00 M) | Cu(s)
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div class="bg-slate-950 p-3 rounded border border-slate-800">
+            <span class="text-sky-400 font-bold block mb-1">Oksidasi (Anoda):</span>
+            <span id="oxReaction" class="font-mono text-slate-200">Zn(s) → Zn²⁺(aq) + 2e⁻</span>
+          </div>
+          <div class="bg-slate-950 p-3 rounded border border-slate-800">
+            <span class="text-rose-400 font-bold block mb-1">Reduksi (Katoda):</span>
+            <span id="redReaction" class="font-mono text-slate-200">Cu²⁺(aq) + 2e⁻ → Cu(s)</span>
+          </div>
+        </div>
+        <div class="bg-slate-950 p-3 rounded border border-slate-800 text-xs">
+          <span class="text-emerald-400 font-bold block mb-1">Reaksi Redoks Total & Perhitungan Nernst:</span>
+          <span id="overallReaction" class="font-mono text-slate-200 block mb-1.5">Zn(s) + Cu²⁺(aq) → Zn²⁺(aq) + Cu(s)</span>
+          <span id="nernstFormula" class="font-mono text-cyan-300 block">E_sel = 1.10 - (0.0592 / 2) · log(1.00 / 1.00) = +1.100 V</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const ELECTRODES = {
+      Mg: { symbol: 'Mg', ion: 'Mg²⁺', salt: 'MgSO₄', val: 2, e0: -2.37, color: '#D4D8DD', sol: 'rgba(230,240,255,0.25)' },
+      Zn: { symbol: 'Zn', ion: 'Zn²⁺', salt: 'ZnSO₄', val: 2, e0: -0.76, color: '#B0B8C4', sol: 'rgba(225,235,245,0.28)' },
+      Fe: { symbol: 'Fe', ion: 'Fe²⁺', salt: 'FeSO₄', val: 2, e0: -0.44, color: '#8A95A5', sol: 'rgba(167,243,208,0.40)' },
+      Cu: { symbol: 'Cu', ion: 'Cu²⁺', salt: 'CuSO₄', val: 2, e0: 0.34, color: '#D97746', sol: 'rgba(56,189,248,0.50)' },
+      Ag: { symbol: 'Ag', ion: 'Ag⁺', salt: 'AgNO₃', val: 1, e0: 0.80, color: '#E8ECF2', sol: 'rgba(241,245,249,0.30)' }
+    };
+
+    const PRESETS = {
+      'pair-1': { an: 'Zn', cat: 'Cu', desc: 'Sistem klasik John Frederic Daniell (1836). Nilai E° standar = +1,10 V.' },
+      'pair-2': { an: 'Mg', cat: 'Cu', desc: 'Tegangan tinggi (+2,71 V) karena Mg sangat elektropositif.' },
+      'pair-3': { an: 'Fe', cat: 'Cu', desc: 'Reaksi redoks Fe-Cu dengan E° standar = +0,78 V.' },
+      'pair-4': { an: 'Zn', cat: 'Ag', desc: 'Transfer elektron multi-valensi (n = 2), E° standar = +1,56 V.' }
+    };
+
+    let curPreset = 'pair-1';
+    let anodeId = 'Zn';
+    let cathodeId = 'Cu';
+    let anodeConc = 1.0;
+    let cathodeConc = 1.0;
+    let isSwitchOn = true;
+    let elapsedTime = 0;
+    let activeMicroTab = 'anode';
+
+    const canvas = document.getElementById('voltaCanvas');
+    const ctx = canvas.getContext('2d');
+    const microCanvas = document.getElementById('microCanvas');
+    const mctx = microCanvas.getContext('2d');
+
+    function calcNernst() {
+      const an = ELECTRODES[anodeId];
+      const cat = ELECTRODES[cathodeId];
+      const E0 = cat.e0 - an.e0;
+      const n = (an.val === 1 && cat.val === 1) ? 1 : 2;
+      const p = n / an.val;
+      const q = n / cat.val;
+      const Q = Math.pow(anodeConc, p) / Math.pow(cathodeConc, q);
+      const logQ = Math.log10(Q);
+      const corr = (0.0592 / n) * logQ;
+      const E_sel = Number((E0 - corr).toFixed(3));
+      return { E0, n, Q, logQ, corr, E_sel, isSpontaneous: E_sel > 0 };
+    }
+
+    function updateUI() {
+      const n = calcNernst();
+      const an = ELECTRODES[anodeId];
+      const cat = ELECTRODES[cathodeId];
+
+      document.getElementById('anodeLabel').innerText = an.symbol + ' / ' + an.salt;
+      document.getElementById('cathodeLabel').innerText = cat.symbol + ' / ' + cat.salt;
+      document.getElementById('anodeConcVal').innerText = anodeConc.toFixed(2) + ' M';
+      document.getElementById('cathodeConcVal').innerText = cathodeConc.toFixed(2) + ' M';
+
+      const meter = document.getElementById('meterDisplay');
+      if (isSwitchOn) {
+        meter.innerText = (n.E_sel >= 0 ? '+' : '') + n.E_sel.toFixed(3) + ' V';
+        meter.className = 'font-mono text-3xl font-extrabold py-1 tracking-wider ' + (n.isSpontaneous ? 'text-cyan-400' : 'text-rose-400');
+        document.getElementById('spontaneousBadge').innerText = n.isSpontaneous ? 'Reaksi Spontan (E_sel > 0)' : 'Reaksi Non-Spontan (E_sel ≤ 0)';
+        document.getElementById('spontaneousBadge').className = 'text-[11px] font-semibold mt-1 ' + (n.isSpontaneous ? 'text-emerald-400' : 'text-rose-400');
+      } else {
+        meter.innerText = '0.000 V';
+        meter.className = 'font-mono text-3xl font-extrabold py-1 tracking-wider text-slate-500';
+        document.getElementById('spontaneousBadge').innerText = 'Sirkuit Terputus (Sakelar OFF)';
+        document.getElementById('spontaneousBadge').className = 'text-[11px] font-semibold mt-1 text-slate-500';
+      }
+
+      document.getElementById('cellNotationBox').innerHTML =
+        '<span class="text-sky-400">' + an.symbol + '(s)</span> | ' +
+        '<span class="text-sky-300">' + an.ion + '(aq, ' + anodeConc.toFixed(2) + ' M)</span> || ' +
+        '<span class="text-rose-300">' + cat.ion + '(aq, ' + cathodeConc.toFixed(2) + ' M)</span> | ' +
+        '<span class="text-rose-400">' + cat.symbol + '(s)</span>';
+
+      document.getElementById('oxReaction').innerText = an.symbol + '(s) → ' + an.ion + '(aq) + ' + (an.val === 2 ? '2e⁻' : 'e⁻');
+      document.getElementById('redReaction').innerText = cat.ion + '(aq) + ' + (cat.val === 2 ? '2e⁻' : 'e⁻') + ' → ' + cat.symbol + '(s)';
+
+      const anCoeff = (n.n / an.val) > 1 ? (n.n / an.val) : '';
+      const catCoeff = (n.n / cat.val) > 1 ? (n.n / cat.val) : '';
+      document.getElementById('overallReaction').innerText = anCoeff + an.symbol + '(s) + ' + catCoeff + cat.ion + '(aq) → ' + anCoeff + an.ion + '(aq) + ' + catCoeff + cat.symbol + '(s)';
+      document.getElementById('nernstFormula').innerText = 'E_sel = ' + n.E0.toFixed(2) + ' - (0.0592 / ' + n.n + ') · log(' + n.Q.toFixed(2) + ') = ' + (n.E_sel >= 0 ? '+' : '') + n.E_sel.toFixed(3) + ' V';
+    }
+
+    // Canvas render loop
+    let tick = 0;
+    function draw() {
+      tick++;
+      if (isSwitchOn) elapsedTime += 0.02;
+
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      // Lab table
+      ctx.fillStyle = '#111827';
+      ctx.fillRect(0, 380, w, 80);
+      ctx.fillStyle = '#0284C7';
+      ctx.fillRect(0, 380, w, 2);
+
+      const an = ELECTRODES[anodeId];
+      const cat = ELECTRODES[cathodeId];
+      const n = calcNernst();
+
+      // Left Beaker (Anode)
+      ctx.fillStyle = an.sol;
+      ctx.fillRect(140, 240, 180, 140);
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(140, 200, 180, 180);
+
+      // Right Beaker (Cathode)
+      ctx.fillStyle = cat.sol;
+      ctx.fillRect(540, 240, 180, 140);
+      ctx.strokeRect(540, 200, 180, 180);
+
+      // Electrodes
+      const anW = Math.max(16, 28 - (isSwitchOn ? elapsedTime * 0.2 : 0));
+      ctx.fillStyle = an.color;
+      ctx.fillRect(170, 170, anW, 140);
+      ctx.strokeRect(170, 170, anW, 140);
+
+      const catW = Math.min(42, 28 + (isSwitchOn ? elapsedTime * 0.2 : 0));
+      ctx.fillStyle = cat.color;
+      ctx.fillRect(660 - (catW - 28)/2, 170, catW, 140);
+      ctx.strokeRect(660 - (catW - 28)/2, 170, catW, 140);
+
+      // Salt Bridge
+      ctx.lineWidth = 20;
+      ctx.strokeStyle = 'rgba(216,180,254,0.5)';
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(280, 310);
+      ctx.lineTo(280, 190);
+      ctx.lineTo(580, 190);
+      ctx.lineTo(580, 310);
+      ctx.stroke();
+
+      // Voltmeter box
+      ctx.fillStyle = '#1E293B';
+      ctx.strokeStyle = '#0284C7';
+      ctx.lineWidth = 2;
+      ctx.fillRect(370, 30, 120, 90);
+      ctx.strokeRect(370, 30, 120, 90);
+
+      ctx.fillStyle = '#0F172A';
+      ctx.fillRect(380, 45, 100, 40);
+      ctx.fillStyle = isSwitchOn ? '#38BDF8' : '#64748B';
+      ctx.font = 'bold 15px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(isSwitchOn ? (n.E_sel >= 0 ? '+' : '') + n.E_sel.toFixed(2) + ' V' : '0.00 V', 430, 70);
+
+      // Switch
+      ctx.fillStyle = '#1E293B';
+      ctx.fillRect(250, 60, 60, 35);
+      ctx.strokeStyle = isSwitchOn ? '#10B981' : '#EF4444';
+      ctx.strokeRect(250, 60, 60, 35);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.fillText(isSwitchOn ? 'ON' : 'OFF', 280, 82);
+
+      // Wires
+      ctx.strokeStyle = '#D97706';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(180, 170);
+      ctx.lineTo(180, 75);
+      ctx.lineTo(250, 75);
+      ctx.stroke();
+
+      if (isSwitchOn) {
+        ctx.beginPath();
+        ctx.moveTo(310, 75);
+        ctx.lineTo(370, 75);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(490, 75);
+        ctx.lineTo(670, 75);
+        ctx.lineTo(670, 170);
+        ctx.stroke();
+
+        // Electrons along wire
+        const eOffset = (tick * 2) % 300;
+        ctx.fillStyle = '#FDE047';
+        ctx.beginPath();
+        ctx.arc(200 + eOffset, 75, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(500 + eOffset * 0.5, 75, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Microscopic view rendering
+      const mw = microCanvas.width;
+      const mh = microCanvas.height;
+      mctx.clearRect(0, 0, mw, mh);
+      mctx.fillStyle = '#090D16';
+      mctx.fillRect(0, 0, mw, mh);
+
+      if (activeMicroTab === 'anode') {
+        mctx.fillStyle = '#334155';
+        mctx.fillRect(0, 0, 180, mh);
+        mctx.fillStyle = '#FFFFFF';
+        mctx.font = 'bold 11px sans-serif';
+        mctx.fillText('Kisi Logam ' + an.symbol, 90, 30);
+        for(let r=0; r<5; r++) {
+          for(let c=0; c<3; c++) {
+            mctx.beginPath();
+            mctx.arc(40 + c*45, 60 + r*35, 14, 0, Math.PI*2);
+            mctx.fillStyle = an.color;
+            mctx.fill();
+            mctx.fillStyle = '#000';
+            mctx.fillText(an.symbol, 40 + c*45, 64 + r*35);
+          }
+        }
+        if (isSwitchOn) {
+          mctx.fillStyle = '#38BDF8';
+          mctx.beginPath();
+          mctx.arc(240 + Math.sin(tick*0.05)*20, 100, 12, 0, Math.PI*2);
+          mctx.fill();
+          mctx.fillStyle = '#FFF';
+          mctx.fillText(an.ion, 240 + Math.sin(tick*0.05)*20, 104);
+        }
+      } else if (activeMicroTab === 'cathode') {
+        mctx.fillStyle = '#334155';
+        mctx.fillRect(0, 0, 180, mh);
+        mctx.fillStyle = '#FFFFFF';
+        mctx.font = 'bold 11px sans-serif';
+        mctx.fillText('Kisi Logam ' + cat.symbol, 90, 30);
+        if (isSwitchOn) {
+          mctx.fillStyle = '#F59E0B';
+          mctx.beginPath();
+          mctx.arc(mw - 80 - (tick*2 % 200), 110, 12, 0, Math.PI*2);
+          mctx.fill();
+          mctx.fillStyle = '#FFF';
+          mctx.fillText(cat.ion, mw - 80 - (tick*2 % 200), 114);
+        }
+      } else {
+        mctx.fillStyle = 'rgba(147, 51, 234, 0.2)';
+        mctx.fillRect(40, 40, mw - 80, mh - 80);
+        mctx.fillStyle = '#C084FC';
+        mctx.font = 'bold 11px sans-serif';
+        mctx.fillText('K⁺ bergerak ke Katoda (Kanan) ➔', mw/2, 80);
+        mctx.fillStyle = '#F43F5E';
+        mctx.fillText('◀ NO₃⁻ bergerak ke Anoda (Kiri)', mw/2, 140);
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    // Event listeners
+    document.getElementById('presetSelect').addEventListener('change', (e) => {
+      curPreset = e.target.value;
+      anodeId = PRESETS[curPreset].an;
+      cathodeId = PRESETS[curPreset].cat;
+      document.getElementById('presetDesc').innerText = PRESETS[curPreset].desc;
+      updateUI();
+    });
+
+    document.getElementById('anodeSlider').addEventListener('input', (e) => {
+      anodeConc = parseFloat(e.target.value);
+      updateUI();
+    });
+
+    document.getElementById('cathodeSlider').addEventListener('input', (e) => {
+      cathodeConc = parseFloat(e.target.value);
+      updateUI();
+    });
+
+    const switchBtn = document.getElementById('switchBtn');
+    function toggleSwitch() {
+      isSwitchOn = !isSwitchOn;
+      switchBtn.innerText = isSwitchOn ? 'SAKELAR [ON]' : 'SAKELAR [OFF]';
+      switchBtn.className = 'py-2.5 px-4 rounded-xl text-xs font-bold shadow transition-all ' + (isSwitchOn ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-rose-600 hover:bg-rose-500 text-white');
+      updateUI();
+    }
+    switchBtn.addEventListener('click', toggleSwitch);
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      elapsedTime = 0;
+      anodeConc = 1.0;
+      cathodeConc = 1.0;
+      document.getElementById('anodeSlider').value = 1.0;
+      document.getElementById('cathodeSlider').value = 1.0;
+      updateUI();
+    });
+
+    canvas.addEventListener('click', toggleSwitch);
+
+    document.getElementById('tabAnode').addEventListener('click', () => {
+      activeMicroTab = 'anode';
+      document.getElementById('microDesc').innerText = 'Anoda: Atom ' + ELECTRODES[anodeId].symbol + ' teroksidasi melepaskan elektron ke kawat, ion larut ke air sehingga batang mengikis.';
+    });
+    document.getElementById('tabCathode').addEventListener('click', () => {
+      activeMicroTab = 'cathode';
+      document.getElementById('microDesc').innerText = 'Katoda: Kation ' + ELECTRODES[cathodeId].ion + ' menyerap elektron dari kawat luar dan mengendap menjadi atom logam baru.';
+    });
+    document.getElementById('tabBridge').addEventListener('click', () => {
+      activeMicroTab = 'bridge';
+      document.getElementById('microDesc').innerText = 'Jembatan Garam: Ion K⁺ berdifusi ke katoda dan NO₃⁻ ke anoda guna menjaga kenetralan muatan larutan.';
+    });
+
+    updateUI();
+    draw();
+  </script>
+</body>
+</html>

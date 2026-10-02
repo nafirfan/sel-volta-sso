@@ -1,0 +1,6 @@
+{
+  "name": "Laboratorium Virtual Sel Volta SMA",
+  "description": "Aplikasi simulasi interaktif Laboratorium Virtual Sel Volta untuk SMA dengan animasi mikroskopik, visualisasi makroskopik, voltmeter digital, dan kalkulator Persamaan Nernst.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
